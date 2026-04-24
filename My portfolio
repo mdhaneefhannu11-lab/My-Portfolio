@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mohammed Haneef | GIS & Mapping Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #050b14;
+  --bg2: #07111f;
+  --card: #0c1a2e;
+  --card2: #0f2040;
+  --border: rgba(56,139,255,0.12);
+  --border2: rgba(56,139,255,0.22);
+  --blue: #388bff;
+  --blue2: #6aabff;
+  --gold: #e8b84b;
+  --gold2: #f5d27a;
+  --white: #f0f4ff;
+  --muted: #7a9bb5;
+  --dim: #3d5870;
+  --glow: rgba(56,139,255,0.15);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);overflow-x:hidden}
+
+/* ── CURSOR ── */
+.cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--blue);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s,width 0.3s,height 0.3s,opacity 0.3s;mix-blend-mode:screen}
+.cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(56,139,255,0.5);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.15s ease-out,width 0.3s,height 0.3s}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 60px;height:64px;background:rgba(5,11,20,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);letter-spacing:0.5px}
+.nav-logo em{color:var(--gold);font-style:italic}
+.nav-links{display:flex;gap:36px;list-style:none}
+.nav-links a{color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s}
+.nav-links a:hover{color:var(--white)}
+.nav-links a:hover::after{width:100%}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:64px 60px 0;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none}
+
+/* Animated grid */
+.grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(56,139,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(56,139,255,0.04) 1px,transparent 1px);background-size:80px 80px}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(56,139,255,0.12),transparent 70%);right:-100px;top:-100px}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(232,184,75,0.07),transparent 70%);left:100px;bottom:0}
+
+.hero-left{position:relative;z-index:2;padding-right:40px}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue2);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:24px;opacity:0;animation:fadeUp 0.7s 0.1s forwards;display:flex;align-items:center;gap:12px}
+.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--blue);display:inline-block}
+
+.hero-name{font-family:'Playfair Display',serif;font-size:clamp(52px,6vw,80px);font-weight:900;line-height:1;margin-bottom:8px;opacity:0;animation:fadeUp 0.7s 0.2s forwards}
+.hero-name span{display:block;color:var(--gold);font-style:italic}
+
+.hero-designation{font-size:17px;font-weight:500;color:var(--muted);margin:20px 0 36px;line-height:1.6;opacity:0;animation:fadeUp 0.7s 0.35s forwards}
+.hero-designation strong{color:var(--white)}
+
+.hero-stats{display:flex;gap:36px;margin-bottom:44px;opacity:0;animation:fadeUp 0.7s 0.45s forwards}
+.stat{text-align:center}
+.stat-n{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:var(--white);line-height:1}
+.stat-n span{color:var(--gold)}
+.stat-l{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:4px}
+
+.hero-ctas{display:flex;gap:14px;opacity:0;animation:fadeUp 0.7s 0.55s forwards}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 30px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:all 0.25s;cursor:pointer;border:none}
+.btn-gold{background:var(--gold);color:#050b14}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(232,184,75,0.25)}
+.btn-ghost{background:transparent;color:var(--white);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue2);transform:translateY(-2px)}
+
+/* Hero right — SVG map visual */
+.hero-right{position:relative;z-index:2;opacity:0;animation:fadeIn 1.2s 0.6s forwards}
+.map-frame{position:relative}
+.map-frame svg{width:100%;filter:drop-shadow(0 20px 60px rgba(56,139,255,0.2))}
+
+/* Floating chips */
+.chip{position:absolute;background:rgba(12,26,46,0.95);border:1px solid var(--border2);padding:10px 16px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);backdrop-filter:blur(10px);white-space:nowrap;animation:float 3s ease-in-out infinite}
+.chip::before{content:'▸';color:var(--gold);margin-right:6px}
+.chip1{top:10%;right:-10px;animation-delay:0s}
+.chip2{bottom:25%;right:-20px;animation-delay:1s}
+.chip3{top:45%;left:-30px;animation-delay:0.5s}
+
+/* scroll indicator */
+.scroll-ind{position:absolute;bottom:32px;left:60px;display:flex;align-items:center;gap:12px;opacity:0;animation:fadeIn 1s 1.2s forwards}
+.scroll-line{width:40px;height:1px;background:var(--dim)}
+.scroll-txt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:0.15em;text-transform:uppercase}
+
+/* ── SHARED SECTION ── */
+section{padding:100px 60px;position:relative}
+.section-inner{max-width:1200px;margin:0 auto}
+.sec-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.sec-label::before{content:'';width:24px;height:1px;background:var(--blue)}
+.sec-title{font-family:'Playfair Display',serif;font-size:clamp(36px,4vw,52px);font-weight:700;margin-bottom:8px;line-height:1.1}
+.sec-title em{color:var(--gold);font-style:italic}
+.sec-sub{font-size:15px;color:var(--muted);font-weight:400;margin-bottom:64px;max-width:560px}
+
+/* ── ABOUT ── */
+#about{background:var(--bg2)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.about-text p{font-size:16px;line-height:1.85;color:var(--muted);margin-bottom:20px;font-weight:400}
+.about-text p strong{color:var(--white);font-weight:600}
+.about-text p em{color:var(--gold);font-style:italic}
+
+.about-right{display:flex;flex-direction:column;gap:16px}
+.attr-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);padding:20px 24px;border-radius:0 4px 4px 0;transition:border-color 0.2s,transform 0.2s}
+.attr-card:hover{border-left-color:var(--blue);transform:translateX(4px)}
+.attr-title{font-size:14px;font-weight:700;color:var(--white);margin-bottom:5px}
+.attr-desc{font-size:13px;color:var(--muted);font-weight:400;line-height:1.6}
+
+/* ── EXPERIENCE ── */
+#experience{background:var(--bg)}
+.exp-grid{display:grid;grid-template-columns:280px 1fr;gap:0}
+.exp-nav{position:sticky;top:80px;height:fit-content;display:flex;flex-direction:column;gap:2px;padding-right:40px;border-right:1px solid var(--border)}
+.exp-tab{padding:14px 18px;font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;border-radius:3px 0 0 3px;transition:all 0.2s;border:none;background:none;text-align:left;border-right:2px solid transparent;margin-right:-1px;position:relative;z-index:1}
+.exp-tab:hover{color:var(--muted);background:rgba(56,139,255,0.05)}
+.exp-tab.active{color:var(--gold);background:rgba(232,184,75,0.06);border-right-color:var(--gold)}
+.exp-tab .tab-co{display:block;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--dim);margin-top:3px;font-weight:400}
+.exp-tab.active .tab-co{color:var(--muted)}
+
+.exp-content{padding-left:48px}
+.exp-panel{display:none}
+.exp-panel.active{display:block}
+.exp-role{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--white);margin-bottom:6px}
+.exp-company{font-size:14px;font-weight:600;color:var(--blue2);margin-bottom:4px}
+.exp-date{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);margin-bottom:28px;letter-spacing:0.08em}
+.exp-bullets{list-style:none;display:flex;flex-direction:column;gap:12px}
+.exp-bullets li{font-size:15px;color:var(--muted);line-height:1.7;padding-left:20px;position:relative;font-weight:400}
+.exp-bullets li::before{content:'▸';position:absolute;left:0;color:var(--gold);font-size:12px;top:3px}
+
+/* ── PROJECTS ── */
+#projects{background:var(--bg2)}
+.projects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border)}
+.proj-card{background:var(--bg2);padding:36px 32px;position:relative;overflow:hidden;transition:background 0.3s;cursor:default}
+.proj-card:hover{background:var(--card2)}
+.proj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--blue));transform:scaleX(0);transform-origin:left;transition:transform 0.4s}
+.proj-card:hover::before{transform:scaleX(1)}
+.proj-visual{width:100%;height:140px;margin-bottom:24px;border-radius:4px;overflow:hidden}
+.proj-visual svg{width:100%;height:100%}
+.proj-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:0.15em;margin-bottom:10px}
+.proj-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.2}
+.proj-desc{font-size:13px;color:var(--muted);line-height:1.7;font-weight:400;margin-bottom:16px}
+.proj-tags{display:flex;flex-wrap:wrap;gap:6px}
+.proj-tag{font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border2);color:var(--blue2);border-radius:2px;letter-spacing:0.05em}
+
+/* ── SKILLS ── */
+#skills{background:var(--bg)}
+.skills-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.skill-block{background:var(--card);border:1px solid var(--border);padding:32px 28px;border-radius:4px;transition:border-color 0.2s}
+.skill-block:hover{border-color:var(--border2)}
+.skill-block-title{font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;font-family:'JetBrains Mono',monospace}
+.skill-rows{display:flex;flex-direction:column;gap:12px}
+.skill-row-label{display:flex;justify-content:space-between;font-size:13px;color:var(--white);margin-bottom:6px;font-weight:500}
+.skill-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.skill-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--blue2));width:0;transition:width 1.4s cubic-bezier(0.4,0,0.2,1)}
+.skill-tags-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.stag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:rgba(56,139,255,0.07);border:1px solid var(--border);color:var(--blue2);border-radius:2px}
+
+/* ── CONTACT ── */
+#contact{background:var(--bg2);text-align:center}
+.contact-inner{max-width:680px;margin:0 auto}
+.contact-cards{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:48px 0}
+.c-card{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);padding:18px 28px;border-radius:3px;text-decoration:none;transition:all 0.2s;min-width:200px}
+.c-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 12px 40px rgba(232,184,75,0.1)}
+.c-icon{font-size:22px}
+.c-info{text-align:left}
+.c-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px}
+.c-val{font-size:14px;color:var(--white);font-weight:600}
+.avail-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.3);padding:8px 20px;border-radius:100px;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:32px}
+.avail-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+
+/* ── FOOTER ── */
+footer{background:var(--bg);border-top:1px solid var(--border);padding:24px 60px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:0.08em}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity 0.7s,transform 0.7s}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-32px);transition:opacity 0.7s,transform 0.7s}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(32px);transition:opacity 0.7s,transform 0.7s}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+
+/* ── ANIMS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.6)}}
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(800%)}}
+@keyframes dash{to{stroke-dashoffset:0}}
+@keyframes ping{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5);opacity:0}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  nav{padding:0 24px}
+  .hero{grid-template-columns:1fr;padding:80px 24px 60px}
+  .hero-right{display:none}
+  section{padding:70px 24px}
+  .about-grid,.exp-grid{grid-template-columns:1fr}
+  .exp-nav{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border);padding:0 0 16px}
+  .exp-content{padding-left:0;padding-top:32px}
+  .projects-grid{grid-template-columns:1fr}
+  .skills-layout{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:12px;text-align:center;padding:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">M.<em>Haneef</em></div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <div class="grid-lines"></div>
+    <div class="hero-orb orb1"></div>
+    <div class="hero-orb orb2"></div>
+  </div>
+
+  <div class="hero-left">
+    <div class="hero-eyebrow">GIS &amp; Mapping Operations Expert</div>
+    <h1 class="hero-name">
+      Mohammed
+      <span>Haneef</span>
+    </h1>
+    <p class="hero-designation">
+      <strong>Program Manager, Mapping Operations</strong><br/>
+      Building high-quality geospatial data systems that power<br/>
+      the next generation of autonomous mobility.
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-n">6<span>+</span></div><div class="stat-l">Years Experience</div></div>
+      <div class="stat"><div class="stat-n">25<span>+</span></div><div class="stat-l">Team Led</div></div>
+      <div class="stat"><div class="stat-n">7<span>+</span></div><div class="stat-l">Key Projects</div></div>
+      <div class="stat"><div class="stat-n">3</div><div class="stat-l">Sectors Served</div></div>
+    </div>
+    <div class="hero-ctas">
+      <a href="#projects" class="btn btn-gold">View My Work</a>
+      <a href="#contact" class="btn btn-ghost">Get In Touch</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="map-frame">
+      <!-- Realistic GIS map SVG -->
+      <svg viewBox="0 0 540 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bgGrad" cx="50%" cy="50%"><stop offset="0%" stop-color="#0f2040"/><stop offset="100%" stop-color="#050b14"/></radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow2"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <clipPath id="mapClip"><rect width="540" height="480" rx="8"/></clipPath>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(56,139,255,0.06)" stroke-width="0.5"/></pattern>
+          <linearGradient id="roadGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#388bff" stop-opacity="0.3"/><stop offset="50%" stop-color="#388bff" stop-opacity="0.8"/><stop offset="100%" stop-color="#388bff" stop-opacity="0.3"/></linearGradient>
+          <linearGradient id="roadGrad2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#e8b84b" stop-opacity="0.3"/><stop offset="50%" stop-color="#e8b84b" stop-opacity="0.7"/><stop offset="100%" stop-color="#e8b84b" stop-opacity="0.3"/></linearGradient>
+        </defs>
+        <g clip-path="url(#mapClip)">
+          <!-- Background -->
+          <rect width="540" height="480" fill="url(#bgGrad)"/>
+          <rect width="540" height="480" fill="url(#grid)"/>
+
+          <!-- Water body -->
+          <path d="M380,320 Q420,280 460,300 Q500,320 520,360 L540,380 L540,480 L380,480 Z" fill="rgba(20,60,120,0.5)" opacity="0.7"/>
+          <path d="M390,330 Q430,295 465,310 Q498,328 515,365" fill="none" stroke="rgba(56,139,255,0.3)" stroke-width="0.8"/>
+
+          <!-- Land parcels -->
+          <rect x="40" y="40" width="120" height="80" rx="1" fill="rgba(30,80,40,0.35)" stroke="rgba(56,200,80,0.2)" stroke-width="0.8"/>
+          <rect x="170" y="40" width="90" height="80" rx="1" fill="rgba(30,80,40,0.25)" stroke="rgba(56,200,80,0.15)" stroke-width="0.8"/>
+          <rect x="40" y="130" width="80" height="70" rx="1" fill="rgba(30,80,40,0.3)" stroke="rgba(56,200,80,0.2)" stroke-width="0.8"/>
+          <rect x="130" y="130" width="100" height="70" rx="1" fill="rgba(40,90,50,0.25)" stroke="rgba(56,200,80,0.15)" stroke-width="0.8"/>
+          <rect x="240" y="60" width="100" height="90" rx="1" fill="rgba(40,60,100,0.3)" stroke="rgba(56,100,200,0.2)" stroke-width="0.8"/>
+          <rect x="350" y="40" width="80" height="60" rx="1" fill="rgba(30,80,40,0.2)" stroke="rgba(56,200,80,0.15)" stroke-width="0.8"/>
+          <rect x="440" y="40" width="80" height="100" rx="1" fill="rgba(40,60,100,0.25)" stroke="rgba(56,100,200,0.18)" stroke-width="0.8"/>
+
+          <rect x="40" y="220" width="140" height="80" rx="1" fill="rgba(30,80,40,0.28)" stroke="rgba(56,200,80,0.15)" stroke-width="0.8"/>
+          <rect x="190" y="220" width="90" height="80" rx="1" fill="rgba(60,40,100,0.25)" stroke="rgba(120,56,200,0.2)" stroke-width="0.8"/>
+          <rect x="290" y="160" width="80" height="130" rx="1" fill="rgba(40,60,100,0.22)" stroke="rgba(56,100,200,0.15)" stroke-width="0.8"/>
+
+          <rect x="40" y="320" width="100" height="100" rx="1" fill="rgba(30,80,40,0.22)" stroke="rgba(56,200,80,0.12)" stroke-width="0.8"/>
+          <rect x="150" y="320" width="130" height="60" rx="1" fill="rgba(40,60,100,0.2)" stroke="rgba(56,100,200,0.12)" stroke-width="0.8"/>
+          <rect x="150" y="390" width="130" height="60" rx="1" fill="rgba(30,80,40,0.2)" stroke="rgba(56,200,80,0.12)" stroke-width="0.8"/>
+
+          <!-- Main roads -->
+          <rect x="0" y="205" width="540" height="8" fill="rgba(56,139,255,0.15)" stroke="rgba(56,139,255,0.4)" stroke-width="0.5"/>
+          <line x1="0" y1="209" x2="540" y2="209" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="20,15"/>
+
+          <rect x="0" y="310" width="540" height="6" fill="rgba(56,139,255,0.1)" stroke="rgba(56,139,255,0.3)" stroke-width="0.5"/>
+
+          <rect x="155" y="0" width="8" height="310" fill="rgba(56,139,255,0.12)" stroke="rgba(56,139,255,0.35)" stroke-width="0.5"/>
+          <rect x="280" y="0" width="6" height="210" fill="rgba(56,139,255,0.1)" stroke="rgba(56,139,255,0.28)" stroke-width="0.5"/>
+          <rect x="380" y="0" width="6" height="320" fill="rgba(56,139,255,0.08)" stroke="rgba(56,139,255,0.22)" stroke-width="0.5"/>
+
+          <!-- Arterial roads (gold = highway) -->
+          <path d="M0,120 Q100,118 200,122 Q300,125 400,119 Q480,115 540,120" fill="none" stroke="rgba(232,184,75,0.5)" stroke-width="3"/>
+          <path d="M0,120 Q100,118 200,122 Q300,125 400,119 Q480,115 540,120" fill="none" stroke="rgba(232,184,75,0.15)" stroke-width="6"/>
+          <path d="M0,120 Q100,118 200,122 Q300,125 400,119 Q480,115 540,120" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" stroke-dasharray="12,10"/>
+
+          <!-- Building blocks -->
+          <rect x="55" y="55" width="18" height="14" rx="1" fill="rgba(150,200,255,0.3)" stroke="rgba(150,200,255,0.4)" stroke-width="0.6"/>
+          <rect x="79" y="55" width="14" height="18" rx="1" fill="rgba(150,200,255,0.25)" stroke="rgba(150,200,255,0.35)" stroke-width="0.6"/>
+          <rect x="98" y="57" width="20" height="12" rx="1" fill="rgba(150,200,255,0.3)" stroke="rgba(150,200,255,0.4)" stroke-width="0.6"/>
+          <rect x="55" y="76" width="30" height="12" rx="1" fill="rgba(150,200,255,0.2)" stroke="rgba(150,200,255,0.3)" stroke-width="0.6"/>
+
+          <rect x="250" y="72" width="22" height="16" rx="1" fill="rgba(100,150,255,0.35)" stroke="rgba(100,150,255,0.5)" stroke-width="0.6"/>
+          <rect x="278" y="72" width="16" height="22" rx="1" fill="rgba(100,150,255,0.28)" stroke="rgba(100,150,255,0.45)" stroke-width="0.6"/>
+          <rect x="250" y="94" width="38" height="14" rx="1" fill="rgba(100,150,255,0.22)" stroke="rgba(100,150,255,0.38)" stroke-width="0.6"/>
+          <rect x="300" y="76" width="24" height="20" rx="1" fill="rgba(100,150,255,0.3)" stroke="rgba(100,150,255,0.45)" stroke-width="0.6"/>
+
+          <rect x="455" y="55" width="20" height="30" rx="1" fill="rgba(150,200,255,0.3)" stroke="rgba(150,200,255,0.45)" stroke-width="0.6"/>
+          <rect x="480" y="60" width="24" height="20" rx="1" fill="rgba(150,200,255,0.25)" stroke="rgba(150,200,255,0.4)" stroke-width="0.6"/>
+          <rect x="455" y="90" width="46" height="12" rx="1" fill="rgba(150,200,255,0.2)" stroke="rgba(150,200,255,0.3)" stroke-width="0.6"/>
+
+          <!-- LiDAR point cloud overlay (right area) -->
+          <g opacity="0.6" filter="url(#glow)">
+            <!-- Ground points - green -->
+            <circle cx="420" cy="400" r="1.5" fill="#00c853"/><circle cx="435" cy="408" r="1.2" fill="#00c853"/>
+            <circle cx="448" cy="395" r="1.8" fill="#00c853"/><circle cx="460" cy="410" r="1.3" fill="#00c853"/>
+            <circle cx="430" cy="420" r="1.5" fill="#00c853"/><circle cx="445" cy="425" r="1" fill="#00c853"/>
+            <circle cx="412" cy="415" r="1.4" fill="#00c853"/><circle cx="470" cy="402" r="1.2" fill="#00c853"/>
+            <!-- Building points - blue -->
+            <circle cx="395" cy="370" r="2" fill="#388bff"/><circle cx="400" cy="360" r="1.8" fill="#388bff"/>
+            <circle cx="390" cy="355" r="1.5" fill="#388bff"/><circle cx="408" cy="365" r="1.6" fill="#388bff"/>
+            <circle cx="398" cy="350" r="1.3" fill="#388bff"/><circle cx="392" cy="378" r="1.8" fill="#388bff"/>
+            <!-- Powerline points - yellow -->
+            <circle cx="350" cy="340" r="1.5" fill="#e8b84b"/><circle cx="365" cy="335" r="1.2" fill="#e8b84b"/>
+            <circle cx="380" cy="338" r="1.4" fill="#e8b84b"/><circle cx="358" cy="345" r="1" fill="#e8b84b"/>
+            <!-- Vegetation - lime -->
+            <circle cx="490" cy="350" r="2.2" fill="#76ff03"/><circle cx="500" cy="342" r="1.8" fill="#76ff03"/>
+            <circle cx="485" cy="338" r="2" fill="#76ff03"/><circle cx="508" cy="355" r="1.5" fill="#76ff03"/>
+            <circle cx="496" cy="362" r="1.7" fill="#76ff03"/><circle cx="515" cy="348" r="1.3" fill="#76ff03"/>
+          </g>
+
+          <!-- GPS/location pins -->
+          <g filter="url(#glow2)">
+            <circle cx="209" cy="209" r="5" fill="var(--gold)" opacity="0.9"/>
+            <circle cx="209" cy="209" r="10" fill="none" stroke="var(--gold)" stroke-width="1.5" opacity="0.5">
+              <animate attributeName="r" values="8;18;8" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="100" cy="170" r="3.5" fill="#388bff" opacity="0.85"/>
+            <circle cx="100" cy="170" r="7" fill="none" stroke="#388bff" stroke-width="1" opacity="0.4">
+              <animate attributeName="r" values="6;14;6" dur="2.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0;0.4" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="330" cy="80" r="3" fill="#ff6b6b" opacity="0.8"/>
+            <circle cx="330" cy="80" r="6" fill="none" stroke="#ff6b6b" stroke-width="1" opacity="0.35">
+              <animate attributeName="r" values="5;12;5" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.35;0;0.35" dur="3s" repeatCount="indefinite"/>
+            </circle>
+          </g>
+
+          <!-- Route line -->
+          <path d="M100,170 Q155,180 209,209 Q260,238 330,280" fill="none" stroke="rgba(56,139,255,0.6)" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+          <!-- UI overlay elements -->
+          <rect x="10" y="10" width="130" height="65" rx="4" fill="rgba(7,17,31,0.85)" stroke="rgba(56,139,255,0.25)" stroke-width="0.8"/>
+          <text x="20" y="28" font-family="monospace" font-size="8" fill="rgba(56,139,255,0.8)" letter-spacing="0.5">MAPPING OPS</text>
+          <line x1="20" y1="33" x2="130" y2="33" stroke="rgba(56,139,255,0.15)" stroke-width="0.5"/>
+          <text x="20" y="46" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Nodes:  </text><text x="54" y="46" font-family="monospace" font-size="7" fill="#e8b84b">4,821</text>
+          <text x="20" y="57" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Edges:  </text><text x="54" y="57" font-family="monospace" font-size="7" fill="#388bff">12,340</text>
+          <text x="20" y="68" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Quality: </text><text x="56" y="68" font-family="monospace" font-size="7" fill="#00c853">98.4%</text>
+
+          <!-- Legend -->
+          <rect x="10" y="420" width="110" height="52" rx="4" fill="rgba(7,17,31,0.85)" stroke="rgba(56,139,255,0.2)" stroke-width="0.8"/>
+          <circle cx="24" cy="432" r="3" fill="#00c853"/><text x="32" y="436" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.55)">Ground</text>
+          <circle cx="24" cy="445" r="3" fill="#388bff"/><text x="32" y="449" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.55)">Buildings</text>
+          <circle cx="24" cy="458" r="3" fill="#e8b84b"/><text x="32" y="462" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.55)">PowerLines</text>
+          <circle cx="24" cy="464" r="0" fill="#76ff03"/><text x="80" y="449" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.55)">+ Veg</text>
+
+          <!-- Compass -->
+          <g transform="translate(500,440)">
+            <circle r="22" fill="rgba(7,17,31,0.85)" stroke="rgba(56,139,255,0.25)" stroke-width="0.8"/>
+            <text x="0" y="-10" font-family="monospace" font-size="8" fill="#388bff" text-anchor="middle">N</text>
+            <text x="0" y="15" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle">S</text>
+            <text x="-13" y="4" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle">W</text>
+            <text x="13" y="4" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle">E</text>
+            <polygon points="0,-14 3,2 0,-1 -3,2" fill="#388bff" opacity="0.9"/>
+            <polygon points="0,14 3,2 0,-1 -3,2" fill="rgba(255,255,255,0.3)"/>
+          </g>
+
+          <!-- Scanline animation -->
+          <rect width="540" height="3" fill="rgba(56,139,255,0.06)" style="animation:scanline 4s linear infinite"/>
+        </g>
+      </svg>
+
+      <!-- Floating chips -->
+      <div class="chip chip1">LiDAR Classified</div>
+      <div class="chip chip2">Indoor Mapped</div>
+      <div class="chip chip3">ArcGIS · QGIS</div>
+    </div>
+  </div>
+
+  <div class="scroll-ind">
+    <div class="scroll-line"></div>
+    <span class="scroll-txt">Scroll to explore</span>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-inner">
+    <div class="sec-label reveal">Who I Am</div>
+    <h2 class="sec-title reveal">Mapping the <em>World</em><br/>One Dataset at a Time</h2>
+    <p class="sec-sub reveal">From ground-truth LiDAR to autonomous vehicle map builds — I bridge the technical and operational.</p>
+    <div class="about-grid">
+      <div class="about-text reveal-left">
+        <p>I'm a <strong>GIS and Mapping Operations professional</strong> with over <strong>6 years</strong> of experience leading high-performing teams across government, enterprise, and autonomous technology ecosystems.</p>
+        <p>My career sits at the intersection of <strong>technical depth and program leadership</strong> — I've classified LiDAR point clouds, built indoor navigation datasets, managed vendor operations teams of <em>25+ people</em>, and architected SOP frameworks adopted organisation-wide.</p>
+        <p>I believe <strong>high-quality map data is infrastructure</strong>. It powers autonomous vehicles, optimises utilities, and enables smarter cities. That conviction drives every project I lead — from cost-efficient map build pipelines to precise geolocation algorithm refinements.</p>
+        <p>Currently open to <strong>Program Manager, Mapping Operations</strong> roles — including on-site, hybrid, or fully remote positions.</p>
+      </div>
+      <div class="about-right reveal-right">
+        <div class="attr-card">
+          <div class="attr-title">🗺️ Mapping Operations at Scale</div>
+          <div class="attr-desc">Led concurrent map build programs for government, utilities, and enterprise clients — ensuring cost-efficient, high-quality spatial data at every stage.</div>
+        </div>
+        <div class="attr-card">
+          <div class="attr-title">📋 SOP & Process Ownership</div>
+          <div class="attr-desc">Designed and owned policy documentation, content management systems, and full process change pipelines for geospatial workflows.</div>
+        </div>
+        <div class="attr-card">
+          <div class="attr-title">🤝 Engineering & Vendor Coordination</div>
+          <div class="attr-desc">Primary point of contact between engineering, vendor operations, and stakeholders — managing escalations, tool rollouts, and change management.</div>
+        </div>
+        <div class="attr-card">
+          <div class="attr-title">⚡ Workflow Optimisation</div>
+          <div class="attr-desc">Identified map build inefficiencies and executed end-to-end solutions — improving quality while reducing operational cost.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-inner">
+    <div class="sec-label reveal">Career History</div>
+    <h2 class="sec-title reveal">Work <em>Experience</em></h2>
+    <p class="sec-sub reveal">A track record of leading mapping operations and geospatial programmes across three companies.</p>
+    <div class="exp-grid reveal">
+      <div class="exp-nav">
+        <button class="exp-tab active" onclick="showExp('e1',this)">
+          Mapsted Technologies
+          <span class="tab-co">06/2024 – Present</span>
+        </button>
+        <button class="exp-tab" onclick="showExp('e2',this)">
+          Landmark Mapping Tech
+          <span class="tab-co">04/2021 – 10/2023</span>
+        </button>
+        <button class="exp-tab" onclick="showExp('e3',this)">
+          Landmark Mapping Solutions
+          <span class="tab-co">04/2019 – 03/2021</span>
+        </button>
+        <button class="exp-tab" onclick="showExp('e4',this)">
+          Early Career
+          <span class="tab-co">02/2017 – 03/2019</span>
+        </button>
+      </div>
+      <div class="exp-content">
+        <div class="exp-panel active" id="e1">
+          <div class="exp-role">Sr. GIS Technical Implementation Specialist</div>
+          <div class="exp-company">Mapsted Technologies Ind Pvt. Ltd</div>
+          <div class="exp-date">06/2024 – PRESENT</div>
+          <ul class="exp-bullets">
+            <li>Primary subject matter expert for mapping operations — coordinated process and tooling changes with engineering and vendor teams, managed escalations, and ensured alignment on map build workflows.</li>
+            <li>Piloted and rolled out new GIS tools, features, and workflows for enterprise clients; developed and maintained SOPs, policy documentation, and content management resources for geospatial and indoor positioning systems.</li>
+            <li>Engineered custom workflows to enhance indoor positioning accuracy, optimise geospatial data pipelines, and identify process efficiency and cost reduction opportunities.</li>
+            <li>Conducted spatial data validation and quality assessments to maintain high-quality map deliverables; collaborated cross-functionally with developers and data scientists to refine geolocation algorithms.</li>
+            <li>Developed technical documentation, led onboarding sessions for junior staff and clients, and managed escalations for location-based service deployments.</li>
+          </ul>
+        </div>
+        <div class="exp-panel" id="e2">
+          <div class="exp-role">GIS Project Lead / Program Manager</div>
+          <div class="exp-company">Landmark Mapping Technologies Pvt. Ltd</div>
+          <div class="exp-date">04/2021 – 10/2023</div>
+          <ul class="exp-bullets">
+            <li>Led and managed a team of 25+ GIS mapping professionals across multiple concurrent mapping operations projects, overseeing deadlines, quality benchmarks, and vendor coordination.</li>
+            <li>Acted as primary point of contact for clients and internal stakeholders; managed escalations, built trust, and maintained transparency on programme status and deliverables.</li>
+            <li>Owned the process change management pipeline — identified map build workflow inefficiencies, designed and executed solutions end-to-end, and coordinated with engineering partners to test and deploy new mapping tools.</li>
+            <li>Created, maintained, and managed SOP documentation, training content, and policy materials to standardise mapping operations across the team.</li>
+            <li>Mentored junior GIS professionals, drove capability development, and ensured consistent quality standards across the mapping operations team.</li>
+          </ul>
+        </div>
+        <div class="exp-panel" id="e3">
+          <div class="exp-role">GIS Senior Analyst</div>
+          <div class="exp-company">Landmark Mapping Solutions</div>
+          <div class="exp-date">04/2019 – 03/2021</div>
+          <ul class="exp-bullets">
+            <li>Developed and delivered GIS mapping solutions for clients in government, transportation, and utilities sectors, ensuring high-quality spatial data outputs.</li>
+            <li>Created maps, reports, and visualisations communicating project results to both technical and non-technical stakeholders.</li>
+            <li>Identified opportunities to improve mapping workflow efficiency; integrated GIS tools into operational pipelines and provided QA and technical support for GIS systems.</li>
+          </ul>
+        </div>
+        <div class="exp-panel" id="e4">
+          <div class="exp-role">GIS Trainee → Analyst &amp; CAD Trainee</div>
+          <div class="exp-company">Landmark Mapping Solutions &amp; Design and Details</div>
+          <div class="exp-date">02/2017 – 03/2019</div>
+          <ul class="exp-bullets">
+            <li>Collected, validated, and managed spatial data using ArcGIS, QGIS, and Microstation; built hands-on expertise in geocoding, mapping, and report generation.</li>
+            <li>Created technical documentation and methodology records supporting team knowledge management. Developed 2D/3D CAD drawings for visualisation and rendering.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-inner">
+    <div class="sec-label reveal">Selected Work</div>
+    <h2 class="sec-title reveal">Key <em>Projects</em></h2>
+    <p class="sec-sub reveal">Geospatial solutions spanning infrastructure, autonomy, government, and indoor navigation.</p>
+    <div class="projects-grid reveal">
+
+      <!-- Project 1: LiDAR -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <rect width="300" height="140" fill="url(#grid)" opacity="0.4"/>
+            <!-- LiDAR points colored by class -->
+            <g filter="url(#glow)">
+              <!-- Ground - green gradient -->
+              <circle cx="20" cy="110" r="2.5" fill="#00c853" opacity="0.9"/><circle cx="35" cy="108" r="2" fill="#00c853"/><circle cx="50" cy="112" r="2.5" fill="#00c853"/><circle cx="65" cy="107" r="2" fill="#00c853"/><circle cx="80" cy="111" r="2.5" fill="#00c853"/><circle cx="95" cy="109" r="2" fill="#00c853"/><circle cx="110" cy="113" r="2.5" fill="#00c853"/><circle cx="125" cy="108" r="2" fill="#00c853"/><circle cx="140" cy="110" r="2.5" fill="#00c853"/><circle cx="155" cy="107" r="2" fill="#00c853"/><circle cx="170" cy="112" r="2.5" fill="#00c853"/><circle cx="185" cy="109" r="2" fill="#00c853"/><circle cx="200" cy="111" r="2.5" fill="#00c853"/><circle cx="215" cy="108" r="2" fill="#00c853"/><circle cx="230" cy="112" r="2.5" fill="#00c853"/><circle cx="245" cy="110" r="2" fill="#00c853"/><circle cx="260" cy="109" r="2.5" fill="#00c853"/><circle cx="275" cy="111" r="2" fill="#00c853"/>
+              <!-- Building - blue vertical -->
+              <circle cx="60" cy="90" r="2.2" fill="#388bff"/><circle cx="60" cy="75" r="2.2" fill="#388bff"/><circle cx="60" cy="60" r="2.2" fill="#388bff"/><circle cx="60" cy="45" r="2.2" fill="#388bff"/>
+              <circle cx="75" cy="90" r="2" fill="#388bff"/><circle cx="75" cy="72" r="2" fill="#388bff"/><circle cx="75" cy="55" r="2" fill="#388bff"/>
+              <circle cx="68" cy="40" r="2.5" fill="#6aabff"/><circle cx="62" cy="42" r="2" fill="#6aabff"/><circle cx="74" cy="42" r="2" fill="#6aabff"/>
+              <!-- Building 2 -->
+              <circle cx="180" cy="90" r="2.2" fill="#388bff"/><circle cx="180" cy="72" r="2.2" fill="#388bff"/><circle cx="180" cy="55" r="2.2" fill="#388bff"/>
+              <circle cx="195" cy="90" r="2" fill="#388bff"/><circle cx="195" cy="68" r="2" fill="#388bff"/>
+              <circle cx="187" cy="48" r="2.5" fill="#6aabff"/><circle cx="181" cy="50" r="2" fill="#6aabff"/>
+              <!-- Powerlines - yellow -->
+              <circle cx="130" cy="85" r="2" fill="#e8b84b"/><circle cx="145" cy="80" r="2" fill="#e8b84b"/><circle cx="160" cy="82" r="2" fill="#e8b84b"/>
+              <line x1="130" y1="85" x2="145" y2="80" stroke="rgba(232,184,75,0.4)" stroke-width="0.8"/>
+              <line x1="145" y1="80" x2="160" y2="82" stroke="rgba(232,184,75,0.4)" stroke-width="0.8"/>
+              <!-- Vegetation - lime -->
+              <circle cx="230" cy="95" r="3" fill="#76ff03" opacity="0.8"/><circle cx="242" cy="88" r="2.5" fill="#76ff03" opacity="0.8"/><circle cx="238" cy="100" r="2.8" fill="#76ff03" opacity="0.7"/><circle cx="250" cy="95" r="2.2" fill="#76ff03" opacity="0.8"/>
+              <!-- Road - white -->
+              <circle cx="100" cy="107" r="1.8" fill="rgba(255,255,255,0.6)"/><circle cx="115" cy="106" r="1.8" fill="rgba(255,255,255,0.6)"/><circle cx="130" cy="107" r="1.8" fill="rgba(255,255,255,0.6)"/><circle cx="145" cy="106" r="1.8" fill="rgba(255,255,255,0.6)"/>
+            </g>
+            <!-- Label -->
+            <rect x="8" y="8" width="90" height="18" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(56,139,255,0.3)" stroke-width="0.6"/>
+            <text x="14" y="20" font-family="monospace" font-size="8" fill="#388bff" letter-spacing="0.5">LiDAR POINT CLOUD</text>
+            <!-- Legend mini -->
+            <circle cx="14" cy="130" r="2.5" fill="#00c853"/><text x="20" y="134" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Ground</text>
+            <circle cx="68" cy="130" r="2.5" fill="#388bff"/><text x="74" y="134" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Building</text>
+            <circle cx="130" cy="130" r="2.5" fill="#e8b84b"/><text x="136" y="134" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">PowerLine</text>
+            <circle cx="200" cy="130" r="2.5" fill="#76ff03"/><text x="206" y="134" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.5)">Vegetation</text>
+          </svg>
+        </div>
+        <div class="proj-num">01 / LiDAR Operations</div>
+        <div class="proj-title">Point Cloud Classification</div>
+        <div class="proj-desc">Classified ground, water, powerlines, buildings, and roads from LiDAR point cloud data — ensuring precision map data for infrastructure clients and autonomous navigation.</div>
+        <div class="proj-tags"><span class="proj-tag">Bentley Microstation</span><span class="proj-tag">LiDAR</span><span class="proj-tag">Infrastructure</span></div>
+      </div>
+
+      <!-- Project 2: AI Road Mapping -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <rect width="300" height="140" fill="url(#grid)" opacity="0.3"/>
+            <!-- Satellite base -->
+            <rect x="0" y="0" width="300" height="140" fill="rgba(20,35,20,0.6)"/>
+            <!-- Road network -->
+            <path d="M0,70 L300,70" stroke="rgba(255,255,200,0.7)" stroke-width="8"/>
+            <path d="M0,70 L300,70" stroke="rgba(255,255,255,0.15)" stroke-width="10"/>
+            <line x1="0" y1="70" x2="300" y2="70" stroke="rgba(255,255,150,0.25)" stroke-width="1" stroke-dasharray="15,10"/>
+            <path d="M150,0 L150,140" stroke="rgba(255,255,200,0.6)" stroke-width="6"/>
+            <path d="M150,0 L150,140" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
+            <path d="M0,30 Q80,28 150,35 Q220,40 300,32" stroke="rgba(200,200,150,0.45)" stroke-width="4"/>
+            <path d="M0,110 Q70,115 150,108 Q220,103 300,112" stroke="rgba(200,200,150,0.4)" stroke-width="3.5"/>
+            <path d="M50,0 L50,140" stroke="rgba(200,200,150,0.25)" stroke-width="2.5"/>
+            <path d="M240,0 L240,140" stroke="rgba(200,200,150,0.25)" stroke-width="2.5"/>
+            <!-- AI annotation overlay -->
+            <g filter="url(#glow)">
+              <path d="M0,70 L300,70" stroke="rgba(56,139,255,0.5)" stroke-width="3" fill="none"/>
+              <path d="M150,0 L150,140" stroke="rgba(56,139,255,0.4)" stroke-width="2.5" fill="none"/>
+              <!-- Annotation boxes (ML labels) -->
+              <rect x="25" y="58" width="50" height="24" rx="1" fill="none" stroke="#388bff" stroke-width="1.2"/>
+              <text x="28" y="68" font-family="monospace" font-size="6" fill="#388bff">road</text>
+              <text x="28" y="76" font-family="monospace" font-size="5.5" fill="rgba(56,139,255,0.6)">0.97</text>
+              <rect x="160" y="58" width="60" height="24" rx="1" fill="none" stroke="#388bff" stroke-width="1.2"/>
+              <text x="163" y="68" font-family="monospace" font-size="6" fill="#388bff">road</text>
+              <text x="163" y="76" font-family="monospace" font-size="5.5" fill="rgba(56,139,255,0.6)">0.95</text>
+              <!-- Intersection label -->
+              <rect x="135" y="55" width="30" height="30" rx="1" fill="rgba(232,184,75,0.12)" stroke="#e8b84b" stroke-width="1.2"/>
+              <text x="140" y="68" font-family="monospace" font-size="6" fill="#e8b84b">inter.</text>
+              <text x="139" y="78" font-family="monospace" font-size="5.5" fill="rgba(232,184,75,0.7)">0.99</text>
+              <!-- Lane markers -->
+              <line x1="0" y1="65" x2="135" y2="65" stroke="rgba(56,139,255,0.3)" stroke-width="0.8" stroke-dasharray="6,5"/>
+              <line x1="165" y1="65" x2="300" y2="65" stroke="rgba(56,139,255,0.3)" stroke-width="0.8" stroke-dasharray="6,5"/>
+              <line x1="0" y1="75" x2="135" y2="75" stroke="rgba(56,139,255,0.3)" stroke-width="0.8" stroke-dasharray="6,5"/>
+              <line x1="165" y1="75" x2="300" y2="75" stroke="rgba(56,139,255,0.3)" stroke-width="0.8" stroke-dasharray="6,5"/>
+            </g>
+            <rect x="8" y="8" width="100" height="18" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(56,139,255,0.3)" stroke-width="0.6"/>
+            <text x="14" y="20" font-family="monospace" font-size="8" fill="#388bff">AI ROAD ANNOTATION</text>
+          </svg>
+        </div>
+        <div class="proj-num">02 / Autonomous Mapping</div>
+        <div class="proj-title">AI-Based Road Mapping</div>
+        <div class="proj-desc">Web annotation workflows generating ML training datasets for road mapping. Hands-on experience building AI-assisted geospatial data pipelines for autonomous vehicle applications.</div>
+        <div class="proj-tags"><span class="proj-tag">ML Datasets</span><span class="proj-tag">Web Annotation</span><span class="proj-tag">Autonomous</span></div>
+      </div>
+
+      <!-- Project 3: Indoor Mapping -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <!-- Floor plan -->
+            <!-- Outer walls -->
+            <rect x="20" y="15" width="260" height="110" rx="2" fill="none" stroke="rgba(232,184,75,0.7)" stroke-width="2"/>
+            <rect x="20" y="15" width="260" height="110" rx="2" fill="rgba(232,184,75,0.04)"/>
+            <!-- Rooms -->
+            <line x1="110" y1="15" x2="110" y2="90" stroke="rgba(232,184,75,0.5)" stroke-width="1.5"/>
+            <line x1="110" y1="100" x2="110" y2="125" stroke="rgba(232,184,75,0.5)" stroke-width="1.5"/>
+            <line x1="200" y1="15" x2="200" y2="60" stroke="rgba(232,184,75,0.5)" stroke-width="1.5"/>
+            <line x1="200" y1="70" x2="200" y2="125" stroke="rgba(232,184,75,0.5)" stroke-width="1.5"/>
+            <line x1="110" y1="65" x2="200" y2="65" stroke="rgba(232,184,75,0.4)" stroke-width="1.2"/>
+            <line x1="20" y1="80" x2="110" y2="80" stroke="rgba(232,184,75,0.4)" stroke-width="1.2"/>
+            <!-- Doors (openings) -->
+            <line x1="110" y1="90" x2="110" y2="100" stroke="#060e1a" stroke-width="3"/>
+            <path d="M110,100 Q120,95 110,90" fill="none" stroke="rgba(232,184,75,0.4)" stroke-width="0.8"/>
+            <line x1="200" y1="60" x2="200" y2="70" stroke="#060e1a" stroke-width="3"/>
+            <path d="M200,70 Q210,65 200,60" fill="none" stroke="rgba(232,184,75,0.4)" stroke-width="0.8"/>
+            <!-- Room labels -->
+            <text x="58" y="51" font-family="monospace" font-size="7.5" fill="rgba(255,255,255,0.4)" text-anchor="middle">LOBBY</text>
+            <text x="58" y="105" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">OFFICE</text>
+            <text x="155" y="45" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">CONF ROOM</text>
+            <text x="155" y="98" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">WORKSPACE</text>
+            <text x="248" y="51" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">SERVER</text>
+            <text x="248" y="98" font-family="monospace" font-size="7" fill="rgba(255,255,255,0.35)" text-anchor="middle">UTILITY</text>
+            <!-- Navigation path -->
+            <g filter="url(#glow)">
+              <path d="M58,125 L58,80 L58,51 L110,51 L155,51 L155,65 L155,98 L200,98 L248,98 L248,51" fill="none" stroke="#388bff" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.8"/>
+              <!-- Position dots -->
+              <circle cx="58" cy="125" r="4" fill="#388bff"/>
+              <circle cx="58" cy="125" r="8" fill="none" stroke="#388bff" stroke-width="1" opacity="0.4">
+                <animate attributeName="r" values="6;14;6" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="248" cy="51" r="3.5" fill="#e8b84b"/>
+              <circle cx="155" cy="98" r="3" fill="#388bff" opacity="0.7"/>
+            </g>
+            <!-- BLE beacons -->
+            <circle cx="58" cy="35" r="3" fill="rgba(56,139,255,0.5)" stroke="#388bff" stroke-width="0.8"/>
+            <circle cx="155" cy="20" r="3" fill="rgba(56,139,255,0.5)" stroke="#388bff" stroke-width="0.8"/>
+            <circle cx="248" cy="125" r="3" fill="rgba(56,139,255,0.5)" stroke="#388bff" stroke-width="0.8"/>
+            <rect x="8" y="8" width="96" height="18" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(232,184,75,0.3)" stroke-width="0.6"/>
+            <text x="14" y="20" font-family="monospace" font-size="8" fill="#e8b84b">INDOOR NAVIGATION</text>
+          </svg>
+        </div>
+        <div class="proj-num">03 / Indoor Mapping</div>
+        <div class="proj-title">Indoor 2D/3D Navigation Mapping</div>
+        <div class="proj-desc">Developed interior CAD and GIS feature datasets enabling indoor positioning and turn-by-turn navigation for enterprise clients at Mapsted Technologies.</div>
+        <div class="proj-tags"><span class="proj-tag">AutoCAD</span><span class="proj-tag">ArcGIS</span><span class="proj-tag">Indoor Positioning</span></div>
+      </div>
+
+      <!-- Project 4: Raster-to-Vector -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <!-- Left: raster -->
+            <text x="70" y="14" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.3)" text-anchor="middle">RASTER</text>
+            <g opacity="0.7">
+              <rect x="10" y="20" width="12" height="12" fill="rgba(40,80,40,0.9)"/><rect x="22" y="20" width="12" height="12" fill="rgba(40,80,40,0.8)"/><rect x="34" y="20" width="12" height="12" fill="rgba(30,60,30,0.9)"/><rect x="46" y="20" width="12" height="12" fill="rgba(50,90,50,0.8)"/><rect x="58" y="20" width="12" height="12" fill="rgba(40,80,40,0.9)"/><rect x="70" y="20" width="12" height="12" fill="rgba(30,60,30,0.8)"/><rect x="82" y="20" width="12" height="12" fill="rgba(50,90,50,0.9)"/><rect x="94" y="20" width="12" height="12" fill="rgba(40,80,40,0.8)"/><rect x="106" y="20" width="12" height="12" fill="rgba(30,60,30,0.9)"/>
+              <rect x="10" y="32" width="12" height="12" fill="rgba(40,80,40,0.8)"/><rect x="22" y="32" width="12" height="12" fill="rgba(200,180,80,0.85)"/><rect x="34" y="32" width="12" height="12" fill="rgba(200,180,80,0.9)"/><rect x="46" y="32" width="12" height="12" fill="rgba(200,180,80,0.8)"/><rect x="58" y="32" width="12" height="12" fill="rgba(200,180,80,0.85)"/><rect x="70" y="32" width="12" height="12" fill="rgba(50,90,50,0.9)"/><rect x="82" y="32" width="12" height="12" fill="rgba(40,80,40,0.8)"/><rect x="94" y="32" width="12" height="12" fill="rgba(30,60,30,0.9)"/><rect x="106" y="32" width="12" height="12" fill="rgba(40,80,40,0.8)"/>
+              <rect x="10" y="44" width="12" height="12" fill="rgba(30,60,30,0.9)"/><rect x="22" y="44" width="12" height="12" fill="rgba(200,180,80,0.9)"/><rect x="34" y="44" width="12" height="12" fill="rgba(220,200,90,0.9)"/><rect x="46" y="44" width="12" height="12" fill="rgba(200,180,80,0.85)"/><rect x="58" y="44" width="12" height="12" fill="rgba(200,180,80,0.8)"/><rect x="70" y="44" width="12" height="12" fill="rgba(40,80,40,0.9)"/>
+              <rect x="10" y="56" width="12" height="12" fill="rgba(40,80,40,0.8)"/><rect x="22" y="56" width="12" height="12" fill="rgba(200,180,80,0.85)"/><rect x="34" y="56" width="12" height="12" fill="rgba(200,180,80,0.8)"/><rect x="46" y="56" width="12" height="12" fill="rgba(220,200,90,0.85)"/><rect x="58" y="56" width="12" height="12" fill="rgba(200,180,80,0.8)"/><rect x="70" y="56" width="12" height="12" fill="rgba(50,90,50,0.9)"/>
+              <rect x="10" y="68" width="12" height="12" fill="rgba(80,140,200,0.8)"/><rect x="22" y="68" width="12" height="12" fill="rgba(80,140,200,0.85)"/><rect x="34" y="68" width="12" height="12" fill="rgba(80,140,200,0.8)"/><rect x="46" y="68" width="12" height="12" fill="rgba(60,120,180,0.8)"/><rect x="58" y="68" width="12" height="12" fill="rgba(40,80,40,0.9)"/><rect x="70" y="68" width="12" height="12" fill="rgba(40,80,40,0.85)"/>
+              <rect x="10" y="80" width="12" height="12" fill="rgba(80,140,200,0.85)"/><rect x="22" y="80" width="12" height="12" fill="rgba(60,120,180,0.8)"/><rect x="34" y="80" width="12" height="12" fill="rgba(80,140,200,0.85)"/>
+            </g>
+            <!-- Arrow -->
+            <g filter="url(#glow)">
+              <line x1="128" y1="65" x2="170" y2="65" stroke="var(--gold)" stroke-width="2"/>
+              <polygon points="170,61 178,65 170,69" fill="var(--gold)"/>
+              <text x="150" y="58" font-family="monospace" font-size="7.5" fill="var(--gold)" text-anchor="middle">EXTRACT</text>
+            </g>
+            <!-- Right: vector -->
+            <text x="235" y="14" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.3)" text-anchor="middle">VECTOR</text>
+            <g filter="url(#glow)">
+              <!-- Parcel polygons -->
+              <polygon points="185,22 245,22 245,58 220,58 220,80 185,80" fill="rgba(56,139,255,0.08)" stroke="rgba(56,139,255,0.7)" stroke-width="1.2"/>
+              <polygon points="220,22 280,22 280,80 220,80 220,58 245,58 245,22" fill="rgba(56,139,255,0.05)" stroke="rgba(56,139,255,0.5)" stroke-width="1.2"/>
+              <rect x="185" y="85" width="95" height="35" rx="1" fill="rgba(56,139,255,0.06)" stroke="rgba(56,139,255,0.6)" stroke-width="1.2"/>
+              <!-- Water polygon -->
+              <path d="M185,125 Q200,120 220,125 Q240,130 260,124 L280,125 L280,140 L185,140 Z" fill="rgba(30,80,160,0.5)" stroke="rgba(80,140,255,0.6)" stroke-width="1"/>
+              <!-- Road line -->
+              <line x1="185" y1="80" x2="280" y2="80" stroke="rgba(255,220,80,0.8)" stroke-width="2.5"/>
+              <line x1="185" y1="80" x2="280" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+              <!-- Labels -->
+              <text x="213" y="44" font-family="monospace" font-size="6.5" fill="rgba(56,139,255,0.7)" text-anchor="middle">PARCEL</text>
+              <text x="255" y="55" font-family="monospace" font-size="6.5" fill="rgba(56,139,255,0.7)" text-anchor="middle">PARCEL</text>
+              <text x="233" y="106" font-family="monospace" font-size="6.5" fill="rgba(56,139,255,0.7)" text-anchor="middle">BUILDING</text>
+            </g>
+            <rect x="8" y="8" width="100" height="16" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(232,184,75,0.3)" stroke-width="0.6"/>
+            <text x="14" y="19" font-family="monospace" font-size="8" fill="#e8b84b">RASTER → VECTOR</text>
+          </svg>
+        </div>
+        <div class="proj-num">04 / Data Conversion</div>
+        <div class="proj-title">Raster-to-Vector Conversion</div>
+        <div class="proj-desc">Large-scale feature extraction and data conversion workflows across ArcGIS, QGIS, JOSM, and Microstation for map build pipelines serving government and utility clients.</div>
+        <div class="proj-tags"><span class="proj-tag">ArcGIS</span><span class="proj-tag">QGIS</span><span class="proj-tag">JOSM</span><span class="proj-tag">Microstation</span></div>
+      </div>
+
+      <!-- Project 5: Vegetation -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <!-- Satellite-like background -->
+            <ellipse cx="80" cy="70" rx="65" ry="55" fill="rgba(20,60,20,0.55)" stroke="rgba(56,200,80,0.25)" stroke-width="0.8"/>
+            <ellipse cx="80" cy="70" rx="45" ry="38" fill="rgba(30,80,30,0.5)" stroke="rgba(56,200,80,0.3)" stroke-width="0.6"/>
+            <ellipse cx="78" cy="68" rx="28" ry="24" fill="rgba(40,100,40,0.55)" stroke="rgba(56,200,80,0.35)" stroke-width="0.6"/>
+            <!-- Clearcut/risk area -->
+            <ellipse cx="175" cy="60" rx="55" ry="40" fill="rgba(180,80,20,0.35)" stroke="rgba(232,120,56,0.5)" stroke-width="1.2"/>
+            <ellipse cx="175" cy="60" rx="35" ry="25" fill="rgba(200,100,30,0.3)" stroke="rgba(232,120,56,0.4)" stroke-width="0.8"/>
+            <!-- Power line corridor -->
+            <line x1="0" y1="105" x2="300" y2="100" stroke="rgba(232,184,75,0.7)" stroke-width="2.5"/>
+            <line x1="0" y1="105" x2="300" y2="100" stroke="rgba(232,184,75,0.15)" stroke-width="5"/>
+            <!-- Tower symbols -->
+            <g fill="none" stroke="rgba(232,184,75,0.8)" stroke-width="1">
+              <line x1="60" y1="97" x2="60" y2="118"/><line x1="55" y1="115" x2="65" y2="115"/><line x1="56" y1="105" x2="64" y2="105"/>
+              <line x1="150" y1="95" x2="150" y2="116"/><line x1="145" y1="113" x2="155" y2="113"/><line x1="146" y1="103" x2="154" y2="103"/>
+              <line x1="240" y1="96" x2="240" y2="117"/><line x1="235" y1="114" x2="245" y2="114"/><line x1="236" y1="104" x2="244" y2="104"/>
+            </g>
+            <!-- Risk annotations -->
+            <g filter="url(#glow)">
+              <circle cx="175" cy="60" r="6" fill="rgba(255,80,80,0.8)" stroke="rgba(255,100,100,0.5)" stroke-width="1">
+                <animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite"/>
+              </circle>
+              <text x="190" y="56" font-family="monospace" font-size="7.5" fill="#ff6060">HIGH RISK</text>
+              <text x="190" y="66" font-family="monospace" font-size="7" fill="rgba(255,100,100,0.7)">ENCROACHMENT</text>
+            </g>
+            <!-- NDVI-like legend bar -->
+            <defs><linearGradient id="ndvi" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ff4444"/><stop offset="40%" stop-color="#e8b84b"/><stop offset="100%" stop-color="#00c853"/></linearGradient></defs>
+            <rect x="10" y="120" width="120" height="8" rx="2" fill="url(#ndvi)" opacity="0.8"/>
+            <text x="10" y="138" font-family="monospace" font-size="6.5" fill="rgba(255,255,255,0.4)">Low</text>
+            <text x="55" y="138" font-family="monospace" font-size="6.5" fill="rgba(255,255,255,0.4)">NDVI Index</text>
+            <text x="118" y="138" font-family="monospace" font-size="6.5" fill="rgba(255,255,255,0.4)">High</text>
+            <rect x="8" y="8" width="118" height="18" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(56,200,80,0.3)" stroke-width="0.6"/>
+            <text x="14" y="20" font-family="monospace" font-size="8" fill="#76ff03">VEGETATION MAPPING</text>
+          </svg>
+        </div>
+        <div class="proj-num">05 / Utility & Environment</div>
+        <div class="proj-title">Vegetation Management Mapping</div>
+        <div class="proj-desc">Large-scale vegetation analysis for utility sector clients — mapping encroachment risks along power corridors and supporting asset management across wide geographic areas.</div>
+        <div class="proj-tags"><span class="proj-tag">ArcGIS</span><span class="proj-tag">QGIS</span><span class="proj-tag">Google Earth</span><span class="proj-tag">NDVI</span></div>
+      </div>
+
+      <!-- Project 6: 3D Railroad -->
+      <div class="proj-card">
+        <div class="proj-visual">
+          <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="140" fill="#060e1a"/>
+            <!-- Sky gradient -->
+            <defs><linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="rgba(10,20,50,0.8)"/><stop offset="100%" stop-color="rgba(15,35,80,0.4)"/></linearGradient></defs>
+            <rect x="0" y="0" width="300" height="80" fill="url(#sky)"/>
+            <!-- Ground plane -->
+            <rect x="0" y="80" width="300" height="60" fill="rgba(25,40,25,0.6)"/>
+            <!-- 3D City buildings (simplified isometric) -->
+            <!-- Building 1 -->
+            <polygon points="30,80 30,40 55,30 55,70" fill="rgba(60,100,150,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="55,70 55,30 80,40 80,80" fill="rgba(40,70,110,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="30,40 55,30 80,40 55,50" fill="rgba(80,130,180,0.8)" stroke="rgba(150,200,240,0.4)" stroke-width="0.5"/>
+            <!-- Windows -->
+            <rect x="36" y="48" width="5" height="5" fill="rgba(255,240,150,0.7)"/><rect x="44" y="48" width="5" height="5" fill="rgba(255,240,150,0.5)"/>
+            <rect x="36" y="58" width="5" height="5" fill="rgba(255,240,150,0.6)"/><rect x="44" y="58" width="5" height="5" fill="rgba(255,240,150,0.7)"/>
+            <!-- Building 2 (taller) -->
+            <polygon points="85,80 85,25 108,15 108,70" fill="rgba(50,90,130,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="108,70 108,15 130,25 130,80" fill="rgba(35,65,100,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="85,25 108,15 130,25 108,35" fill="rgba(70,120,165,0.8)" stroke="rgba(150,200,240,0.4)" stroke-width="0.5"/>
+            <rect x="91" y="40" width="4" height="5" fill="rgba(255,240,150,0.6)"/><rect x="98" y="40" width="4" height="5" fill="rgba(255,240,150,0.7)"/>
+            <rect x="91" y="52" width="4" height="5" fill="rgba(255,240,150,0.5)"/><rect x="98" y="52" width="4" height="5" fill="rgba(255,240,150,0.6)"/>
+            <rect x="91" y="64" width="4" height="5" fill="rgba(255,240,150,0.7)"/><rect x="98" y="64" width="4" height="5" fill="rgba(255,240,150,0.5)"/>
+            <!-- Building 3 -->
+            <polygon points="200,80 200,45 225,35 225,70" fill="rgba(55,95,140,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="225,70 225,35 250,45 250,80" fill="rgba(38,68,105,0.7)" stroke="rgba(100,160,220,0.3)" stroke-width="0.5"/>
+            <polygon points="200,45 225,35 250,45 225,55" fill="rgba(75,125,170,0.8)" stroke="rgba(150,200,240,0.4)" stroke-width="0.5"/>
+            <rect x="206" y="55" width="4" height="5" fill="rgba(255,240,150,0.6)"/><rect x="214" y="55" width="4" height="5" fill="rgba(255,240,150,0.5)"/>
+            <rect x="206" y="65" width="4" height="5" fill="rgba(255,240,150,0.7)"/>
+            <!-- Railroad tracks (perspective) -->
+            <g filter="url(#glow)">
+              <path d="M140,140 L155,80 L165,80 L180,140 Z" fill="rgba(150,130,100,0.4)" stroke="rgba(200,180,140,0.3)" stroke-width="0.5"/>
+              <line x1="155" y1="80" x2="140" y2="140" stroke="rgba(200,180,140,0.8)" stroke-width="2"/>
+              <line x1="165" y1="80" x2="180" y2="140" stroke="rgba(200,180,140,0.8)" stroke-width="2"/>
+              <line x1="156" y1="88" x2="164" y2="88" stroke="rgba(200,180,140,0.6)" stroke-width="1.5"/>
+              <line x1="154" y1="98" x2="166" y2="98" stroke="rgba(200,180,140,0.6)" stroke-width="1.5"/>
+              <line x1="152" y1="110" x2="168" y2="110" stroke="rgba(200,180,140,0.6)" stroke-width="1.5"/>
+              <line x1="150" y1="122" x2="170" y2="122" stroke="rgba(200,180,140,0.6)" stroke-width="1.5"/>
+              <line x1="148" y1="134" x2="172" y2="134" stroke="rgba(200,180,140,0.6)" stroke-width="1.5"/>
+            </g>
+            <!-- Tool tag -->
+            <rect x="8" y="8" width="96" height="18" rx="2" fill="rgba(6,14,26,0.9)" stroke="rgba(100,160,220,0.3)" stroke-width="0.6"/>
+            <text x="14" y="20" font-family="monospace" font-size="8" fill="rgba(100,180,255,0.9)">3D CITY MAPPING</text>
+          </svg>
+        </div>
+        <div class="proj-num">06 / 3D Visualisation</div>
+        <div class="proj-title">3D Railroad & City Mapping</div>
+        <div class="proj-desc">City view modelling of railroad corridors from input imagery using Autodesk 3DS Max, combined with large-scale 2D parcel and utility network mapping for government programs.</div>
+        <div class="proj-tags"><span class="proj-tag">3DS Max</span><span class="proj-tag">AutoCAD</span><span class="proj-tag">QGIS</span><span class="proj-tag">Transportation</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-inner">
+    <div class="sec-label reveal">Technical Arsenal</div>
+    <h2 class="sec-title reveal">Skills &amp; <em>Expertise</em></h2>
+    <p class="sec-sub reveal">From ground-truth LiDAR to programme leadership — the full stack of a Mapping Operations PM.</p>
+    <div class="skills-layout">
+      <div class="skill-block reveal">
+        <div class="skill-block-title">GIS & Mapping Tools</div>
+        <div class="skill-rows">
+          <div><div class="skill-row-label"><span>ArcGIS</span><span>95%</span></div><div class="skill-track"><div class="skill-fill" data-w="95"></div></div></div>
+          <div><div class="skill-row-label"><span>QGIS</span><span>93%</span></div><div class="skill-track"><div class="skill-fill" data-w="93"></div></div></div>
+          <div><div class="skill-row-label"><span>Bentley Microstation (LiDAR)</span><span>88%</span></div><div class="skill-track"><div class="skill-fill" data-w="88"></div></div></div>
+          <div><div class="skill-row-label"><span>Global Mapper / JOSM</span><span>85%</span></div><div class="skill-track"><div class="skill-fill" data-w="85"></div></div></div>
+          <div><div class="skill-row-label"><span>AutoCAD / 3DS Max</span><span>82%</span></div><div class="skill-track"><div class="skill-fill" data-w="82"></div></div></div>
+        </div>
+      </div>
+      <div class="skill-block reveal">
+        <div class="skill-block-title">Program & Operations</div>
+        <div class="skill-rows">
+          <div><div class="skill-row-label"><span>Mapping Operations Management</span><span>96%</span></div><div class="skill-track"><div class="skill-fill" data-w="96"></div></div></div>
+          <div><div class="skill-row-label"><span>SOP & Policy Documentation</span><span>92%</span></div><div class="skill-track"><div class="skill-fill" data-w="92"></div></div></div>
+          <div><div class="skill-row-label"><span>Process Change Management</span><span>90%</span></div><div class="skill-track"><div class="skill-fill" data-w="90"></div></div></div>
+          <div><div class="skill-row-label"><span>Vendor & Engineering Coord.</span><span>91%</span></div><div class="skill-track"><div class="skill-fill" data-w="91"></div></div></div>
+          <div><div class="skill-row-label"><span>Team Leadership (25+ people)</span><span>94%</span></div><div class="skill-track"><div class="skill-fill" data-w="94"></div></div></div>
+        </div>
+      </div>
+      <div class="skill-block reveal">
+        <div class="skill-block-title">Spatial Specialties</div>
+        <div class="skill-tags-wrap">
+          <span class="stag">LiDAR Processing</span><span class="stag">Indoor Mapping</span><span class="stag">Raster-to-Vector</span><span class="stag">Feature Extraction</span><span class="stag">Geocoding</span><span class="stag">Spatial Analysis</span><span class="stag">Point Cloud Classification</span><span class="stag">Geolocation Algorithms</span>
+        </div>
+      </div>
+      <div class="skill-block reveal">
+        <div class="skill-block-title">Documentation & Content</div>
+        <div class="skill-tags-wrap">
+          <span class="stag">SOP Development</span><span class="stag">Technical Writing</span><span class="stag">Content Management</span><span class="stag">Knowledge Management</span><span class="stag">Process Documentation</span><span class="stag">Training Content</span><span class="stag">Policy Frameworks</span><span class="stag">GenAI Tools</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="contact-inner">
+      <div class="sec-label reveal" style="justify-content:center">Let's Connect</div>
+      <h2 class="sec-title reveal" style="text-align:center">Open to <em>Opportunities</em></h2>
+      <p class="sec-sub reveal" style="text-align:center;margin:0 auto 32px">Available for Mapping Operations PM roles globally. Open to Travel / Remote Work.</p>
+      <div class="avail-badge reveal"><div class="avail-dot"></div> Available for New Roles</div>
+      <div class="contact-cards reveal">
+        <a href="mailto:md.haneefhannu11@gmail.com" class="c-card">
+          <div class="c-icon">✉️</div>
+          <div class="c-info"><div class="c-label">Email</div><div class="c-val">md.haneefhannu11@gmail.com</div></div>
+        </a>
+        <a href="tel:+919550951306" class="c-card">
+          <div class="c-icon">📞</div>
+          <div class="c-info"><div class="c-label">Phone</div><div class="c-val">+91-9550951306</div></div>
+        </a>
+        <a href="https://linkedin.com/in/haneef-mohammed" target="_blank" class="c-card">
+          <div class="c-icon">💼</div>
+          <div class="c-info"><div class="c-label">LinkedIn</div><div class="c-val">haneef-mohammed</div></div>
+        </a>
+      </div>
+      <p class="contact-note reveal" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:0.06em">
+        Kakinada, Andhra Pradesh, India &nbsp;•&nbsp; English · Telugu · Hindi &nbsp;•&nbsp; Open to Travel / Remote Work
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-copy">© 2025 Mohammed Haneef &nbsp;•&nbsp; GIS & Mapping Operations</div>
+  <div class="footer-copy">Kakinada, India &nbsp;•&nbsp; Available globally</div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
+function animRing(){rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing);}
+animRing();
+document.querySelectorAll('a,button,.proj-card,.attr-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.style.width='16px';cursor.style.height='16px';ring.style.width='56px';ring.style.height='56px';});
+  el.addEventListener('mouseleave',()=>{cursor.style.width='10px';cursor.style.height='10px';ring.style.width='36px';ring.style.height='36px';});
+});
+
+// Intersection observer
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){setTimeout(()=>e.target.classList.add('visible'),i*60);obs.unobserve(e.target);}
+  });
+},{threshold:0.08});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>obs.observe(el));
+
+// Skill bars
+const barObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.skill-fill').forEach(bar=>{
+        setTimeout(()=>{ bar.style.width = bar.dataset.w + '%'; },200);
+      });
+      barObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.2});
+document.querySelectorAll('.skill-block').forEach(b=>barObs.observe(b));
+
+// Experience tabs
+function showExp(id, btn) {
+  document.querySelectorAll('.exp-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.exp-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Nav active on scroll
+const sections = document.querySelectorAll('section[id]');
+const navAs = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', ()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-90) cur=s.id; });
+  navAs.forEach(a=>{ a.style.color = a.getAttribute('href')==='#'+cur?'var(--white)':''; });
+});
+</script>
+</body>
+</html>
